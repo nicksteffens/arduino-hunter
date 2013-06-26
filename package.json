@@ -1,0 +1,12 @@
+{
+  "name": "arduino-hunter",
+  "private": true,
+  "version": "0.0.0",
+  "author": "Nick Steffens",
+  "description": "Real Life Tank Hunter built with arduino",
+  "dependencies" : {
+    "socket.io"   :  "latest",
+    "socket.io-client": "latest",
+    "express" : "latest"
+  }
+}

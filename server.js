@@ -6,7 +6,7 @@ var reservedHunters = [];
 
 // what to serve
 app.use(express.static(__dirname + '/'));
-var io = require('socket.io').listen(app.listen(port));
+var io = require('socket.io').listen(app.listen(port), {log: false});
 
 // connection handler
 io.sockets.on('connection', function (socket) {
@@ -14,17 +14,7 @@ io.sockets.on('connection', function (socket) {
     // requests
     socket.on('connect', function(data){
       Workers.validate(socket, data);
-    });
 
-    socket.on('activeHunters', function(){
-      var hunters = Workers.activeHunters();
-      var msg = {
-        alias: 'Server',
-        message: hunters + ' are currently connected.'
-      };
-
-      if( hunters === null)
-      Response.privateMessage(msg, socket);
     });
 
     socket.on('disconnect', function(){
@@ -51,12 +41,12 @@ var Response = {
 
   message: function(msg) {
     io.sockets.emit('message', msg);
-    console.log(msg);
+    console.log('Global Response : ' + msg.message);
   },
 
   privateMessage: function(msg, socket) {
-    socket.emit(msg);
-    console.log('privateMessage : ' + msg);
+    socket.emit('message', msg);
+    console.log('Private Response @'+ socket.id + ' : ' + msg.message);
   },
 
   // WARN:
@@ -102,17 +92,16 @@ var Validate = {
 
 var Workers = {
 
-  enlistHunter: function(hunter) {
+  enlistHunter: function(hunter, socket) {
     activeHunters.push(hunter);
-
     var msg = {alias: 'Server', message: hunter.alias + ' has connected.'};
     Response.message(msg);
+    Workers.activeHunters(socket);
   },
 
-  enlistReserved: function(idx) {
+  enlistReserved: function(idx, socket) {
     // enlist reserve hunter
-    Workers.enlistHunter(reservedHunters[idx]);
-    console.log(reservedHunters[idx].alias + ' has returned');
+    Workers.enlistHunter(reservedHunters[idx], socket);
 
     // remove from reserved list
     reservedHunters.splice(idx, 1);
@@ -132,7 +121,7 @@ var Workers = {
    for(var i = 0; i < reservedHunters.length; i++) {
 
     if(data.alias === reservedHunters[i].alias) {
-      Workers.enlistReserved(i);
+      Workers.enlistReserved(i, socket);
       reserved = true;
     }
 
@@ -146,6 +135,7 @@ var Workers = {
 
   newHunter: function(socket, data) {
     // construct newHunter
+
     var newHunter = {
       id: socket.id,
       alias: data.alias,
@@ -153,27 +143,42 @@ var Workers = {
     };
 
     // enlist newHunter
-    Workers.enlistHunter(newHunter);
+    Workers.enlistHunter(newHunter, socket);
   },
 
-  activeHunters: function() {
-    var str, arr;
+  activeHunters: function(socket) {
 
-    if(activeHunters.length() > 0) {
+    var str,
+        arr = [];
 
-      for(var i = 0; i < activeHunters; i++) {
-        arr.push(activeHunters[i].alias);
+    if(activeHunters.length > 1) {
+      var i = 0;
+      while (i < activeHunters.length) {
+        var hunter = activeHunters[i];
+        if(hunter.id != socket.id) arr.push(hunter.alias);
+        i++;
       }
 
       str = arr.join(', ');
 
+      if(arr.length > 1) {
+        str = str + ' are';
+      } else {
+        str = str + ' is';
+      }
+
     } else {
 
-      str = 'No hunters';
+      str = 'No other hunters are';
 
     }
 
-    return str;
+    var msg = {
+      alias: 'Server',
+      message: str + ' currently connected.'
+    };
+
+    Response.privateMessage(msg, socket);
 
   }
 

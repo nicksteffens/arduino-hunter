@@ -23,7 +23,6 @@ var Request = {
   socket: io.connect(),
 
   id: function() {
-
     // ask the socket for id
     Request.socket.emit('connect', {
       id: undefined,
@@ -31,29 +30,10 @@ var Request = {
       status: undefined
     });
 
-    // socket connected
-    Request.socket.on('connected', function(response){
-      Hunter.id = response.id,
-      Hunter.alias = response.alias,
-      Hunter.status = response.status;
-
-      console.log('Response : connect : %o', Hunter.id, Hunter.alias, Hunter.status);
-
-      Request.hunters();
-    });
-
-    // socket reconnected
-    Request.socket.on('reconnect', function(response){
-      Hunter.id = response.id,
-      Hunter.alias = response.alias,
-      Hunter.status = response.status;
-
-      console.log('Response : reconnect : %o', Hunter.id, Hunter.alias, Hunter.status);
-    });
   },
 
   hunters: function() {
-
+    // request active hunters
     Request.socket.emit('activeHunters');
 
   },

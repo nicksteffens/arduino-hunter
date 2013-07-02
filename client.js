@@ -2,7 +2,6 @@ var Hunter = {
 
   setup: function() {
     Hunter.setAlias();
-
   },
 
   setAlias: function() {
@@ -12,6 +11,7 @@ var Hunter = {
           Hunter.alias = $(this).siblings('input').val();
           Request.message();
           Request.id();
+          View.toggleUI();
         }
       });
 
@@ -19,6 +19,21 @@ var Hunter = {
 
 
   }
+};
+
+var View = {
+
+  toggleUI: function() {
+    var toggleArray = [$('.ui'), $('.combatLog'), $('.alias')],
+        i = 0;
+
+    while (i < toggleArray.length) {
+      toggleArray[i].toggleClass('hidden');
+      i++;
+    }
+
+  }
+
 };
 
 var Listeners = {

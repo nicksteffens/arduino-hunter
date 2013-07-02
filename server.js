@@ -17,6 +17,15 @@ io.sockets.on('connection', function (socket) {
 
     });
 
+    socket.on('shot', function(data) {
+      var msg = {
+        alias: Workers.getHunterAlias(socket),
+        message: 'fired a shot.'
+      };
+
+      Response.broadcast(msg, socket);
+    });
+
     socket.on('disconnect', function(){
       Response.disconnectHunter(socket);
     });
@@ -49,11 +58,9 @@ var Response = {
     console.log('Private Response @'+ socket.id + ' : ' + msg.message);
   },
 
-  // WARN:
-  // This currently is broken
-  broadcast: function(msg) {
-    io.sockets.broadcast.emit('message', msg);
-    console.log(msg);
+  broadcast: function(msg, socket) {
+    socket.broadcast.emit('message', msg);
+    console.log('Broadcast from @' + socket.id + ' : ' + msg.message);
   }
 
 };
@@ -95,7 +102,9 @@ var Workers = {
   enlistHunter: function(hunter, socket) {
     activeHunters.push(hunter);
     var msg = {alias: 'Server', message: hunter.alias + ' has connected.'};
-    Response.message(msg);
+    // tells other hunters a hunter has connected
+    Response.broadcast(msg, socket);
+    // tells the enlisted hunter the other hunters
     Workers.activeHunters(socket);
   },
 
@@ -180,6 +189,16 @@ var Workers = {
 
     Response.privateMessage(msg, socket);
 
+  },
+
+  getHunterAlias: function(socket) {
+    var i = 0;
+    while(i < activeHunters.length) {
+      var hunter = activeHunters[i];
+      if(socket.id === hunter.id) {
+        return hunter.alias;
+      }
+    }
   }
 
 };

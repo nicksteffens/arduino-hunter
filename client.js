@@ -15,8 +15,24 @@ var Hunter = {
         }
       });
 
+    Listeners.shot();
+
 
   }
+};
+
+var Listeners = {
+
+  shot: function() {
+    $('#shoot').on({
+      click: function(e) {
+        e.preventDefault();
+        console.log('Request : Shot');
+        Request.shot();
+      }
+    });
+  }
+
 };
 
 var Request = {
@@ -41,22 +57,25 @@ var Request = {
   message: function() {
     var $log = $('#logOutput');
     Request.socket.on('message', function(response) {
-        var label, logEntry;
+      var label, logEntry;
 
-      switch(response.alias) {
-        case 'server':
-          label = 'label-info';
-        break;
-        case !Hunter.alias:
-          label = 'label-warning';
-        break;
-        default:
-          label = '';
+      if(response.alias == 'Server') {
+        label = '';
+
+      } else if(response.alias == Hunter.alias) {
+        label = 'label-info';
+
+      } else {
+        label = 'label-warning';
       }
 
       logEntry = '<span class="label ' + label + '">' + response.alias + '</span> ' + response.message + '</br>';
       $log.append(logEntry);
     });
+  },
+
+  shot: function() {
+    Request.socket.emit('shot');
   }
 
 };
